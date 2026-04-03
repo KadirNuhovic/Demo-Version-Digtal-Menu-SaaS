@@ -106,6 +106,10 @@ router.post('/', validateOrder, async (req: Request, res: Response, next: NextFu
       .populate('tableId')
       .populate('items.productId');
 
+    // Emit WebSocket event for new order
+    const socketService = require('../services/socketService').SocketService.getInstance();
+    socketService.emitNewOrder(populatedOrder);
+
     res.status(201).json(populatedOrder);
   } catch (error) {
     next(error);
@@ -133,6 +137,10 @@ router.put('/:id/status', validateUUID('id'), async (req: Request, res: Response
       throw createError('Order not found', 404);
     }
 
+    // Emit WebSocket event for order status update
+    const socketService = require('../services/socketService').SocketService.getInstance();
+    socketService.emitOrderStatusUpdate(req.params.id, status, order);
+
     res.json(order);
   } catch (error) {
     next(error);
@@ -153,6 +161,11 @@ router.delete('/:id', validateUUID('id'), async (req: Request, res: Response, ne
     }
 
     await Order.findByIdAndDelete(req.params.id);
+    
+    // Emit WebSocket event for order deletion
+    const socketService = require('../services/socketService').SocketService.getInstance();
+    socketService.emitOrderDeleted(req.params.id);
+    
     res.json({ message: 'Order deleted successfully' });
   } catch (error) {
     next(error);

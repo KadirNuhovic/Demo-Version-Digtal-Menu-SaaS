@@ -1,9 +1,11 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB, disconnectDB } from './config/database';
+import { SocketService } from './services/socketService';
 
 import productRoutes from './routes/productRoutes';
 import orderRoutes from './routes/orderRoutes';
@@ -12,7 +14,11 @@ import tableRoutes from './routes/tableRoutes';
 dotenv.config();
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Initialize Socket.io
+const socketService = SocketService.getInstance(server);
 
 // Connect to MongoDB
 connectDB();
@@ -52,9 +58,10 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket server ready`);
   console.log(`�️  MongoDB connected`);
 });
 
